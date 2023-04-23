@@ -8,8 +8,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.lang.model.element.Name;
 
 /**
  * The Catalog keeps track of all available tables in the database and their
@@ -26,8 +29,36 @@ public class Catalog {
      * Constructor.
      * Creates a new, empty catalog.
      */
+    public static class TableDesc implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+        public TupleDesc schema;
+        public String name;
+        public String primaryKey;
+        public DbFile databaseFile;
+        
+        public TableDesc() {
+            schema = new TupleDesc();
+            primaryKey = "";
+            databaseFile = null;
+            name = "";
+        }
+
+        public TableDesc(String tname, TupleDesc t, String pkey, DbFile dbfile) {
+            name = tname;
+            schema = t;
+            primaryKey = pkey;
+            databaseFile = dbfile;
+            
+        }
+    }
+
+ 
+
+    public Map<Integer, TableDesc> tableMap; // name to table details
     public Catalog() {
         // TODO: some code goes here
+        tableMap = new HashMap<Integer, TableDesc>();
     }
 
     /**
@@ -42,6 +73,20 @@ public class Catalog {
      */
     public void addTable(DbFile file, String name, String pkeyField) {
         // TODO: some code goes here
+        int tableId = file.getId();
+    	tableMap.put(tableId, new TableDesc(name, file.getTupleDesc(), pkeyField, file));
+    	Vector<Integer> toDelete = new Vector<Integer>();
+    	
+    	for(Integer tKey : tableMap.keySet()) {
+    		String itrName = tableMap.get(tKey).name;
+    		if(itrName.equals(name) && tKey != tableId) { // same name, different id
+    			toDelete.add(tKey);
+    		}
+    	}
+    	
+    	for(int i = 0; i < toDelete.size(); ++i) {
+    		 tableMap.remove(toDelete.get(i));
+    	}
     }
 
     public void addTable(DbFile file, String name) {
@@ -67,7 +112,16 @@ public class Catalog {
      */
     public int getTableId(String name) throws NoSuchElementException {
         // TODO: some code goes here
-        return 0;
+        if(name == null) {
+    		throw new NoSuchElementException();	
+    	}
+    	for (Map.Entry<Integer, TableDesc> entry : tableMap.entrySet()) {
+    		if(entry.getValue().name.equals(name)) {
+    			return entry.getKey();
+    		}
+    	
+    	}
+        throw new NoSuchElementException();
     }
 
     /**
@@ -79,7 +133,11 @@ public class Catalog {
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
         // TODO: some code goes here
-        return null;
+        if(tableMap.containsKey(tableid)) {
+    		return tableMap.get(tableid).schema;
+    	}
+    	
+    	throw new NoSuchElementException();
     }
 
     /**
@@ -91,22 +149,34 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         // TODO: some code goes here
-        return null;
+        if(tableMap.containsKey(tableid)) {
+    		return tableMap.get(tableid).databaseFile;
+    	}
+    	
+    	throw new NoSuchElementException();
     }
 
     public String getPrimaryKey(int tableid) {
         // TODO: some code goes here
-        return null;
+        if(tableMap.containsKey(tableid)) {
+    		return tableMap.get(tableid).primaryKey;
+    	}
+    	
+    	throw new NoSuchElementException();
     }
 
     public Iterator<Integer> tableIdIterator() {
         // TODO: some code goes here
-        return null;
+        return tableMap.keySet().iterator();
     }
 
     public String getTableName(int id) {
         // TODO: some code goes here
-        return null;
+        if(tableMap.containsKey(id)) {
+    		return tableMap.get(id).name;
+    	}
+    	
+    	throw new NoSuchElementException();
     }
 
     /**
@@ -114,6 +184,7 @@ public class Catalog {
      */
     public void clear() {
         // TODO: some code goes here
+        tableMap.clear();
     }
 
     /**

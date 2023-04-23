@@ -38,6 +38,9 @@ public class BufferPool {
      */
     public static final int DEFAULT_PAGES = 50;
 
+    final ConcurrentHashMap<PageId, Page> pages;
+    final int numPages;
+
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -45,6 +48,8 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         // TODO: some code goes here
+        pages = new ConcurrentHashMap<PageId, Page>();
+    	this.numPages = numPages;
     }
 
     public static int getPageSize() {
@@ -79,7 +84,20 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
         // TODO: some code goes here
-        return null;
+    	
+            HeapPage p = (HeapPage) pages.get(pid);
+            
+            if(p == null) {
+                if(pages.size() >= numPages) {
+                    evictPage();
+                }
+                DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
+                p = (HeapPage) file.readPage(pid); 	   
+                p.setPermissions(perm);
+                pages.put(pid, p);
+     
+            }
+            return p;
     }
 
     /**
@@ -94,6 +112,7 @@ public class BufferPool {
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
         // TODO: some code goes here
         // not necessary for lab1|lab2
+        
     }
 
     /**

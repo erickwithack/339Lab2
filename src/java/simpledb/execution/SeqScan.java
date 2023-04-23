@@ -3,6 +3,7 @@ package simpledb.execution;
 import simpledb.common.Database;
 import simpledb.common.DbException;
 import simpledb.common.Type;
+import simpledb.storage.DbFile;
 import simpledb.storage.DbFileIterator;
 import simpledb.storage.Tuple;
 import simpledb.storage.TupleDesc;
@@ -33,8 +34,19 @@ public class SeqScan implements OpIterator {
      *                   are, but the resulting name can be null.fieldName,
      *                   tableAlias.null, or null.null).
      */
+    final TransactionId xactionId;
+    final int tableId;
+    final String tableAlias;
+    final DbFile srcData;
+    DbFileIterator srcDataItr; 
+    
+
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
         // TODO: some code goes here
+        xactionId = tid;
+    	tableId = tableid;
+    	this.tableAlias = tableAlias;
+    	srcData = Database.getCatalog().getDatabaseFile(tableId);
     }
 
     /**
@@ -42,7 +54,7 @@ public class SeqScan implements OpIterator {
      *         be the actual name of the table in the catalog of the database
      */
     public String getTableName() {
-        return null;
+        return Database.getCatalog().getTableName(tableId);
     }
 
     /**
@@ -50,7 +62,7 @@ public class SeqScan implements OpIterator {
      */
     public String getAlias() {
         // TODO: some code goes here
-        return null;
+        return tableAlias;
     }
 
     /**
@@ -66,6 +78,7 @@ public class SeqScan implements OpIterator {
      */
     public void reset(int tableid, String tableAlias) {
         // TODO: some code goes here
+        srcDataItr = srcData.iterator(xactionId);
     }
 
     public SeqScan(TransactionId tid, int tableId) {
@@ -74,6 +87,10 @@ public class SeqScan implements OpIterator {
 
     public void open() throws DbException, TransactionAbortedException {
         // TODO: some code goes here
+        if(srcDataItr == null) {
+    		srcDataItr = srcData.iterator(xactionId);
+    	}
+    	srcDataItr.open();
     }
 
     /**
@@ -88,26 +105,28 @@ public class SeqScan implements OpIterator {
      */
     public TupleDesc getTupleDesc() {
         // TODO: some code goes here
-        return null;
+        return Database.getCatalog().getTupleDesc(tableId);
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
         // TODO: some code goes here
-        return false;
+        return srcDataItr.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
         // TODO: some code goes here
-        return null;
+        return srcDataItr.next();
     }
 
     public void close() {
         // TODO: some code goes here
+        srcDataItr.close();
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
         // TODO: some code goes here
+        srcDataItr.rewind();
     }
 }

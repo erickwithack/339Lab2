@@ -1,5 +1,6 @@
 package simpledb.storage;
 
+
 import simpledb.common.Catalog;
 import simpledb.common.Database;
 import simpledb.common.DbException;
@@ -7,6 +8,7 @@ import simpledb.common.Debug;
 import simpledb.transaction.TransactionId;
 
 import java.io.*;
+import java.security.Permissions;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -24,6 +26,10 @@ public class HeapPage implements Page {
     final byte[] header;
     final Tuple[] tuples;
     final int numSlots;
+
+    boolean isDirty;
+    TransactionId tid;
+    Permissions lock;
 
     byte[] oldData;
     private final Byte oldDataLock = (byte) 0;
@@ -76,9 +82,22 @@ public class HeapPage implements Page {
      */
     private int getNumTuples() {
         // TODO: some code goes here
-        return 0;
+        int pageSize = BufferPool.getPageSize();
+    	int tupleSize = td.getSize();
+    	
+    	return pageSize * 8 / (tupleSize * 8 + 1);
 
     }
+
+    public synchronized void setPermissions(Permissions perms) {
+    	lock = perms;
+    }
+
+    public boolean isLocked() {
+    	return lock != null;
+    }
+
+   
 
     /**
      * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
@@ -88,7 +107,9 @@ public class HeapPage implements Page {
     private int getHeaderSize() {
 
         // TODO: some code goes here
-        return 0;
+        int numTuples = getNumTuples();
+    	System.out.println("Have " + numTuples + " tuples, and a header size of " + (int) Math.ceil(numTuples / 8.0));
+    	return (int) Math.ceil(numTuples / 8.0);
 
     }
 
@@ -122,7 +143,7 @@ public class HeapPage implements Page {
      */
     public HeapPageId getId() {
         // TODO: some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return pid;
     }
 
     /**
@@ -231,6 +252,26 @@ public class HeapPage implements Page {
         return baos.toByteArray();
     }
 
+    Tuple getTuple(int idx) {
+
+        if (idx >= tuples.length)
+            throw new NoSuchElementException();
+
+
+        try {
+            if(!isSlotUsed(idx)) {
+                Debug.log(1, "HeapPage.getTuple: slot %d in %d:%d is not used", idx, pid.getTableId(), pid.getPageNumber());
+                return null;
+            }
+
+            Debug.log(1, "HeapPage.getTuple: returning tuple %d", idx);
+            return tuples[idx];
+
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new NoSuchElementException();
+        }
+    }    
+
     /**
      * Static method to generate a byte array corresponding to an empty
      * HeapPage.
@@ -256,6 +297,7 @@ public class HeapPage implements Page {
     public void deleteTuple(Tuple t) throws DbException {
         // TODO: some code goes here
         // not necessary for lab1
+        
     }
 
     /**
@@ -294,7 +336,14 @@ public class HeapPage implements Page {
      */
     public int getNumUnusedSlots() {
         // TODO: some code goes here
-        return 0;
+        int tupleCount = getNumTuples();
+    	int count = 0;
+    	for(int i = 0; i < tupleCount; ++i) {
+    		if(isSlotUsed(i)) {
+    			++count;
+    		}
+     	}
+    	return tupleCount - count;
     }
 
     /**
@@ -302,7 +351,11 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // TODO: some code goes here
-        return false;
+        int idx = i % 8;
+    	int offset = (i - idx) / 8;
+    	int flag = 1 << idx;
+    	
+    	return ((header[offset] & flag) == flag);
     }
 
     /**
@@ -311,6 +364,15 @@ public class HeapPage implements Page {
     private void markSlotUsed(int i, boolean value) {
         // TODO: some code goes here
         // not necessary for lab1
+        int idx = i % 8;
+    	int offset = (i - idx) / 8;
+    	
+    	if(value) {
+    		header[offset] |= 1 << idx;
+    	}
+    	else {
+    		header[offset] &= ~(1 << idx);
+    	}
     }
 
     /**
@@ -319,8 +381,53 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // TODO: some code goes here
-        return null;
+        return new HeapPageIterator(this);
     }
 
+}
+
+class HeapPageIterator implements Iterator<Tuple> {
+    int curTuple = 0;
+    Tuple nextToReturn = null;
+    HeapPage p;
+
+    public HeapPageIterator(HeapPage p) {
+        this.p = p;
+    }
+
+    public boolean hasNext() {
+        if (nextToReturn != null)
+            return true;
+
+        try {
+            while (true) {
+                nextToReturn = p.getTuple(curTuple++);
+                if(nextToReturn != null)
+                    return true;
+            }
+        } catch(NoSuchElementException e) {
+            return false;
+        }
+    }
+
+    public Tuple next() {
+        Tuple next = nextToReturn;
+
+        if (next == null) {
+            if (hasNext()) {
+                next = nextToReturn;
+                nextToReturn = null;
+                return next;
+            } else
+                throw new NoSuchElementException();
+        } else {
+            nextToReturn = null;
+            return next;
+        }
+    }
+
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
 }
 
