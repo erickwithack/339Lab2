@@ -178,34 +178,25 @@ public class TupleDesc implements Serializable {
      */
     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
         // TODO: some code goes here
-        TupleDesc out = new TupleDesc();
+        TupleDesc result = new TupleDesc();
 
         int s = td1.attributesList.size();
         int s2 = td2.attributesList.size();
 
 
-
         int j = 0;
         while (j < s){
-            out.attributesList.add(td1.attributesList.get(j));
+            result.attributesList.add(td1.attributesList.get(j));
             j++;
         }
 
         int k = 0;
         while (k < s2){
-            out.attributesList.add(td2.attributesList.get(k));
+            result.attributesList.add(td2.attributesList.get(k));
             k++;
         }
     	
-    	// for(int k = 0; k < s2; ++k) {
-    	// 	out.attributesList.add(td2.attributesList.get(k);;
-    	// }
-
-        // 	for(int j = 0; j < s; ++j) {
-    	// 	out.attributesList.add(td1.attributesList.get(j));;
-    	// }
-    	
-    	return out;
+    	return result;
     }
 
     /**
@@ -224,15 +215,19 @@ public class TupleDesc implements Serializable {
     		return false;
     	}
     	if(o.getClass().equals(TupleDesc.class)) {
-    		TupleDesc td = (TupleDesc) o;
-    		if(td.attributesList.size() != attributesList.size()) {
+    		TupleDesc tdesc = (TupleDesc) o;
+
+            int tSize = tdesc.attributesList.size();
+            int aSize =  attributesList.size();
+
+    		if(tSize != aSize) {
     			return false;
     		}
     		for(int i = 0; i < attributesList.size(); ++i) {
-    			if(!td.attributesList.get(i).fieldName.equals(attributesList.get(i).fieldName)) {
+    			if(!tdesc.attributesList.get(i).fieldName.equals(attributesList.get(i).fieldName)) {
     				return false;
     				}
-    			   if(!td.attributesList.get(i).fieldType.equals(attributesList.get(i).fieldType)) {
+    			   if(!tdesc.attributesList.get(i).fieldType.equals(attributesList.get(i).fieldType)) {
     				return false;
     			   }
     		}
