@@ -85,19 +85,19 @@ public class BufferPool {
             throws TransactionAbortedException, DbException {
         // TODO: some code goes here
     	
-            HeapPage p = (HeapPage) pages.get(pid);
+            HeapPage hpage = (HeapPage) pages.get(pid);
             
-            if(p == null) {
+            if(hpage == null) {
                 if(pages.size() >= numPages) {
                     evictPage();
                 }
-                DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
-                p = (HeapPage) file.readPage(pid); 	   
-                p.setPermissions(perm);
-                pages.put(pid, p);
+                DbFile db_file1 = Database.getCatalog().getDatabaseFile(pid.getTableId());
+                hpage = (HeapPage) db_file1.readPage(pid); 	   
+                hpage.setPermissions(perm);
+                pages.put(pid, hpage);
      
             }
-            return p;
+            return hpage;
     }
 
     /**

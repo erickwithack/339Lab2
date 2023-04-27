@@ -32,22 +32,22 @@ public class Catalog {
     public static class TableDesc implements Serializable {
 
         private static final long serialVersionUID = 1L;
-        public TupleDesc schema;
-        public String name;
-        public String primaryKey;
+        public TupleDesc databaseSchema;
+        public String databaseName;
+        public String databasePrimaryKey;
         public DbFile databaseFile;
         
         public TableDesc() {
-            schema = new TupleDesc();
-            primaryKey = "";
+            databaseSchema = new TupleDesc();
+            databasePrimaryKey = "";
             databaseFile = null;
-            name = "";
+            databaseName = "";
         }
 
         public TableDesc(String tname, TupleDesc t, String pkey, DbFile dbfile) {
-            name = tname;
-            schema = t;
-            primaryKey = pkey;
+            databaseName = tname;
+            databaseSchema = t;
+            databasePrimaryKey = pkey;
             databaseFile = dbfile;
             
         }
@@ -55,10 +55,10 @@ public class Catalog {
 
  
 
-    public Map<Integer, TableDesc> tableMap; // name to table details
+    public Map<Integer, TableDesc> tableHashMap; // name to table details
     public Catalog() {
         // TODO: some code goes here
-        tableMap = new HashMap<Integer, TableDesc>();
+        tableHashMap = new HashMap<Integer, TableDesc>();
     }
 
     /**
@@ -74,18 +74,18 @@ public class Catalog {
     public void addTable(DbFile file, String name, String pkeyField) {
         // TODO: some code goes here
         int tableId = file.getId();
-    	tableMap.put(tableId, new TableDesc(name, file.getTupleDesc(), pkeyField, file));
+    	tableHashMap.put(tableId, new TableDesc(name, file.getTupleDesc(), pkeyField, file));
     	Vector<Integer> toDelete = new Vector<Integer>();
     	
-    	for(Integer tKey : tableMap.keySet()) {
-    		String itrName = tableMap.get(tKey).name;
+    	for(Integer tKey : tableHashMap.keySet()) {
+    		String itrName = tableHashMap.get(tKey).databaseName;
     		if(itrName.equals(name) && tKey != tableId) { // same name, different id
     			toDelete.add(tKey);
     		}
     	}
     	
     	for(int i = 0; i < toDelete.size(); ++i) {
-    		 tableMap.remove(toDelete.get(i));
+            tableHashMap.remove(toDelete.get(i));
     	}
     }
 
@@ -115,8 +115,8 @@ public class Catalog {
         if(name == null) {
     		throw new NoSuchElementException();	
     	}
-    	for (Map.Entry<Integer, TableDesc> entry : tableMap.entrySet()) {
-    		if(entry.getValue().name.equals(name)) {
+    	for (Map.Entry<Integer, TableDesc> entry : tableHashMap.entrySet()) {
+    		if(entry.getValue().databaseName.equals(name)) {
     			return entry.getKey();
     		}
     	
@@ -125,7 +125,7 @@ public class Catalog {
     }
 
     /**
-     * Returns the tuple descriptor (schema) of the specified table
+     * Returns the tuple descriptor (databaseSchema) of the specified table
      *
      * @param tableid The id of the table, as specified by the DbFile.getId()
      *                function passed to addTable
@@ -133,8 +133,8 @@ public class Catalog {
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
         // TODO: some code goes here
-        if(tableMap.containsKey(tableid)) {
-    		return tableMap.get(tableid).schema;
+        if(tableHashMap.containsKey(tableid)) {
+    		return tableHashMap.get(tableid).databaseSchema;
     	}
     	
     	throw new NoSuchElementException();
@@ -149,8 +149,8 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         // TODO: some code goes here
-        if(tableMap.containsKey(tableid)) {
-    		return tableMap.get(tableid).databaseFile;
+        if(tableHashMap.containsKey(tableid)) {
+    		return tableHashMap.get(tableid).databaseFile;
     	}
     	
     	throw new NoSuchElementException();
@@ -158,8 +158,8 @@ public class Catalog {
 
     public String getPrimaryKey(int tableid) {
         // TODO: some code goes here
-        if(tableMap.containsKey(tableid)) {
-    		return tableMap.get(tableid).primaryKey;
+        if(tableHashMap.containsKey(tableid)) {
+    		return tableHashMap.get(tableid).databasePrimaryKey;
     	}
     	
     	throw new NoSuchElementException();
@@ -167,13 +167,13 @@ public class Catalog {
 
     public Iterator<Integer> tableIdIterator() {
         // TODO: some code goes here
-        return tableMap.keySet().iterator();
+        return tableHashMap.keySet().iterator();
     }
 
     public String getTableName(int id) {
         // TODO: some code goes here
-        if(tableMap.containsKey(id)) {
-    		return tableMap.get(id).name;
+        if(tableHashMap.containsKey(id)) {
+    		return tableHashMap.get(id).databaseName;
     	}
     	
     	throw new NoSuchElementException();
@@ -184,7 +184,7 @@ public class Catalog {
      */
     public void clear() {
         // TODO: some code goes here
-        tableMap.clear();
+        tableHashMap.clear();
     }
 
     /**

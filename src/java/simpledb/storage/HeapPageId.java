@@ -53,8 +53,8 @@ public class HeapPageId implements PageId {
         // TODO: some code goes here
         if(o == null) { return false; }
         if(o.getClass() == this.getClass()) {
-            HeapPageId id = (HeapPageId) o;
-            if(id.pageNo == this.pageNo && id.tableId == this.tableId) {
+            HeapPageId hpId = (HeapPageId) o;
+            if(hpId.pageNo == this.pageNo && hpId.tableId == this.tableId) {
                 return true;
             }
         }

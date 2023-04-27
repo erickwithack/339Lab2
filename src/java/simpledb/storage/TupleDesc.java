@@ -69,11 +69,12 @@ public class TupleDesc implements Serializable {
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
         // TODO: some code goes here
         attributesList = new Vector<TDItem>();
-    	for(int i = 0; i < typeAr.length; ++i) {
-    		TDItem t = new TDItem(typeAr[i], fieldAr[i]);
-    		attributesList.add(t);
-    		
-    	}
+        int idx = 0;
+        while (idx < typeAr.length){
+            TDItem tupleDescItem = new TDItem(typeAr[idx], fieldAr[idx]);
+    		attributesList.add(tupleDescItem);
+            idx++;
+        }
       
     }
 
@@ -87,11 +88,9 @@ public class TupleDesc implements Serializable {
     public TupleDesc(Type[] typeAr) {
         // TODO: some code goes here
         attributesList = new Vector<TDItem>();
-    	
     	for(int i = 0; i < typeAr.length; ++i) {
-    		TDItem t = new TDItem(typeAr[i], "");
-    		attributesList.add(t);
-    		
+    		TDItem resultItem = new TDItem(typeAr[i], "");
+    		attributesList.add(resultItem);	
     	}
     }
 
@@ -143,12 +142,15 @@ public class TupleDesc implements Serializable {
      */
     public int indexForFieldName(String name) throws NoSuchElementException {
         // TODO: some code goes here
+        int aSize = attributesList.size();
         if(name == null)  {
     		throw new NoSuchElementException();    
     	}
-    	for(int i = 0; i < attributesList.size(); ++i) {
-    		if(name.equals(attributesList.get(i).fieldName)) {
-    			return i;
+    	for(int idx = 0; idx < aSize; ++idx) {
+            String fieldName = new String();
+            fieldName = attributesList.get(idx).fieldName;
+    		if(name.equals(fieldName)) {
+    			return idx;
     		}
     	}
     	throw new NoSuchElementException();    	
@@ -160,12 +162,15 @@ public class TupleDesc implements Serializable {
      */
     public int getSize() {
         // TODO: some code goes here
-        int sum = 0;
-    	for(int i = 0; i < attributesList.size(); ++i) {
-    		sum += attributesList.get(i).fieldType.getLen();
-    	}
+        int result = 0;
+        int aSize = attributesList.size();
+        int i = 0;
+        while (i < aSize){
+            result += attributesList.get(i).fieldType.getLen();
+            i++;
+        }
     	
-    	return sum;
+    	return result;
     }
 
     /**
@@ -251,12 +256,16 @@ public class TupleDesc implements Serializable {
      */
     public String toString() {
         // TODO: some code goes here
-        String s = new String();
-        s = attributesList.get(0).toString();
-        for(int i = 1; i < attributesList.size(); ++i) {
-        	 s = s + attributesList.get(i).toString();
+        String result = new String();
+        result = attributesList.get(0).toString();
+        int aSize = attributesList.size();
+
+        int k = 0;
+        while (k < aSize){
+            result = result + attributesList.get(k).toString();
+            k++;
         }
     	
-        return s;
+        return result;
     }
 }

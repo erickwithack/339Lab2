@@ -20,13 +20,15 @@ public class Tuple implements Serializable {
      * @param td the schema of this tuple. It must be a valid TupleDesc
      *           instance with at least one field.
      */
-    public Field[] fields;
+    public Field[] fieldsList;
     public TupleDesc tupleDesc;
-    public RecordId recId;
+    public RecordId record_Id;
+
+
     public Tuple(TupleDesc td) {
         // TODO: some code goes here
         tupleDesc = td;
-    	fields = new Field[td.numFields()];
+    	fieldsList = new Field[td.numFields()];
     }
 
     /**
@@ -43,7 +45,7 @@ public class Tuple implements Serializable {
      */
     public RecordId getRecordId() {
         // TODO: some code goes here
-        return recId;
+        return record_Id;
     }
 
     /**
@@ -53,7 +55,7 @@ public class Tuple implements Serializable {
      */
     public void setRecordId(RecordId rid) {
         // TODO: some code goes here
-        recId = rid;
+        record_Id = rid;
     }
 
     /**
@@ -64,7 +66,7 @@ public class Tuple implements Serializable {
      */
     public void setField(int i, Field f) {
         // TODO: some code goes here
-        fields[i] = f;
+        fieldsList[i] = f;
     }
 
     /**
@@ -73,7 +75,7 @@ public class Tuple implements Serializable {
      */
     public Field getField(int i) {
         // TODO: some code goes here
-        return fields[i];
+        return fieldsList[i];
     }
 
     /**
@@ -86,13 +88,13 @@ public class Tuple implements Serializable {
      */
     public String toString() {
         // TODO: some code goes here
-        String out = new String();
+        String result = new String();
     	int i = 0;
-    	for(; i < fields.length - 1; ++i) {
-    			out = out + fields[i] + '\t';
+    	for(; i < fieldsList.length - 1; ++i) {
+            result = result + fieldsList[i] + '\t';
     	}
-    	out = out + fields[i] + '\n';
-    	return out;
+    	result = result + fieldsList[i] + '\n';
+    	return result;
     }
 
     /**
@@ -100,7 +102,7 @@ public class Tuple implements Serializable {
      */
     public Iterator<Field> fields() {
         // TODO: some code goes here
-        return Arrays.asList(fields).iterator();
+        return Arrays.asList(fieldsList).iterator();
     }
 
     /**
