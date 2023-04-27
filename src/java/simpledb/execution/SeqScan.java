@@ -9,7 +9,6 @@ import simpledb.storage.Tuple;
 import simpledb.storage.TupleDesc;
 import simpledb.transaction.TransactionAbortedException;
 import simpledb.transaction.TransactionId;
-
 import java.util.NoSuchElementException;
 
 /**
@@ -34,19 +33,18 @@ public class SeqScan implements OpIterator {
      *                   are, but the resulting name can be null.fieldName,
      *                   tableAlias.null, or null.null).
      */
-    final TransactionId xactionId;
-    final int tableId;
-    final String tableAlias;
-    final DbFile srcData;
-    DbFileIterator srcDataItr; 
+    private boolean isItOpen = false;
+    private TransactionId tid;
+    private TupleDesc myTupleD;
+    private transient DbFileIterator it;
+    private String tablename;
+    private String alias;
     
 
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
         // TODO: some code goes here
-        xactionId = tid;
-    	tableId = tableid;
-    	this.tableAlias = tableAlias;
-    	srcData = Database.getCatalog().getDatabaseFile(tableId);
+        this.tid = tid;
+        reset(tableid,tableAlias);
     }
 
     /**
@@ -54,15 +52,15 @@ public class SeqScan implements OpIterator {
      *         be the actual name of the table in the catalog of the database
      */
     public String getTableName() {
-        return Database.getCatalog().getTableName(tableId);
+        return this.tablename;
     }
-
+    
     /**
-     * @return Return the alias of the table this operator scans.
-     */
-    public String getAlias() {
-        // TODO: some code goes here
-        return tableAlias;
+     * @return Return the alias of the table this operator scans. 
+     * */
+    public String getAlias()
+    {
+        return this.alias;
     }
 
     /**
@@ -78,7 +76,21 @@ public class SeqScan implements OpIterator {
      */
     public void reset(int tableid, String tableAlias) {
         // TODO: some code goes here
-        srcDataItr = srcData.iterator(xactionId);
+        this.isItOpen=false;
+        this.alias = tableAlias;
+        this.tablename = Database.getCatalog().getTableName(tableid);
+        this.it = Database.getCatalog().getDatabaseFile(tableid).iterator(tid);
+        myTupleD = Database.getCatalog().getTupleDesc(tableid);
+        String[] newNames = new String[myTupleD.numFields()];
+        Type[] newTypes = new Type[myTupleD.numFields()];
+        for (int i = 0; i < myTupleD.numFields(); i++) {
+            String name = myTupleD.getFieldName(i);
+            Type t = myTupleD.getFieldType(i);
+
+            newNames[i] = tableAlias + "." + name;
+            newTypes[i] = t;
+        }
+        myTupleD = new TupleDesc(newTypes, newNames);
     }
 
     public SeqScan(TransactionId tid, int tableId) {
@@ -87,10 +99,11 @@ public class SeqScan implements OpIterator {
 
     public void open() throws DbException, TransactionAbortedException {
         // TODO: some code goes here
-        if(srcDataItr == null) {
-    		srcDataItr = srcData.iterator(xactionId);
-    	}
-    	srcDataItr.open();
+        if (isItOpen)
+        throw new DbException("double open on one DbIterator.");
+
+    it.open();
+    isItOpen = true;
     }
 
     /**
@@ -105,28 +118,35 @@ public class SeqScan implements OpIterator {
      */
     public TupleDesc getTupleDesc() {
         // TODO: some code goes here
-        return Database.getCatalog().getTupleDesc(tableId);
+        return myTupleD;
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
         // TODO: some code goes here
-        return srcDataItr.hasNext();
+        if (!isItOpen)
+        throw new IllegalStateException("iterator is closed");
+    return it.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
         // TODO: some code goes here
-        return srcDataItr.next();
+        if (!isItOpen)
+        throw new IllegalStateException("iterator is closed");
+
+    return it.next();
     }
 
     public void close() {
         // TODO: some code goes here
-        srcDataItr.close();
+        it.close();
+        isItOpen = false;
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
         // TODO: some code goes here
-        srcDataItr.rewind();
+        close();
+        open();
     }
 }

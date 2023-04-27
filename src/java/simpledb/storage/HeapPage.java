@@ -29,7 +29,7 @@ public class HeapPage implements Page {
 
     boolean isDirty;
     TransactionId tid;
-    Permissions lock;
+    simpledb.common.Permissions lock;
 
     byte[] oldData;
     private final Byte oldDataLock = (byte) 0;
@@ -89,8 +89,8 @@ public class HeapPage implements Page {
 
     }
 
-    public synchronized void setPermissions(Permissions perms) {
-    	lock = perms;
+    public synchronized void setPermissions(simpledb.common.Permissions perm) {
+    	lock = perm;
     }
 
     public boolean isLocked() {
